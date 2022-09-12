@@ -10,8 +10,8 @@
 - Export `contentTypeMultipart` so that users can create all kinds
   of multipart messages. ([#81])
 
-- Add `headerAuthor`, for and reading the `Author:` header field
-  defined in [RFC 9057]. ([#77])
+- Add `headerAuthor`, for setting and reading the `Author:` header
+  field defined in [RFC 9057]. ([#77])
 
 - Add support for parsing MIME subparts without bodies.  The new
   `entities'` traversal visits all parts, projecting `Just body`
@@ -23,6 +23,7 @@
 [#82]: https://github.com/purebred-mua/purebred-email/issues/82
 [#87]: https://github.com/purebred-mua/purebred-email/issues/87
 [#90]: https://github.com/purebred-mua/purebred-email/issues/90
+[RFC 9057]: https://datatracker.ietf.org/doc/html/rfc9057
 
 
 ## Version 0.6 (2022-09-13)
