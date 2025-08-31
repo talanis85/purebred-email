@@ -1,4 +1,4 @@
-## Next
+## Version 0.7 (2025-08-31)
 
 - Support non-ASCII UTF-8 in `Subject` and other unstructured
   headers.  ([#82])
