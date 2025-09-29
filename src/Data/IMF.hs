@@ -413,7 +413,7 @@ phrase charsets = foldMany1Sep " " $
   -- decode them, and concatenate the result.
   fmap
     ( foldMap (decodeEncodedWord charsets) )
-    ( ("=?" *> encodedWord) `sepBy1` char8 ' ' )
+    ( optionalCFWS *> ("=?" *> encodedWord) `sepBy1` char8 ' ' )
   <|> fmap decodeLenient word
 
 displayName :: CharsetLookup -> Parser T.Text
