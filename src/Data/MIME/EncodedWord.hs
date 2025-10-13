@@ -54,7 +54,7 @@ import Data.MIME.Error (EncodingError)
 import Data.MIME.TransferEncoding
 import Data.MIME.Base64
 import Data.MIME.QuotedPrintable
-import Data.IMF.Syntax (ci, takeTillString)
+import Data.IMF.Syntax (ci, takeTillString, isWsp)
 
 {-# ANN module ("HLint: ignore Eta reduce" :: String) #-}
 
@@ -158,6 +158,13 @@ transferEncodeEncodedWord (TransferDecodedEncodedWord charset lang s) =
 -- hola mundo!
 -- @
 --
+-- Whitespace between two encoded words is ignored (see RFC 2047 6.2)
+--
+-- @
+-- λ> T.putStrLn $ decodeEncodedWords defaultCharsets "=?utf-8?B?55Sw?= =?utf-8?B?55Sw?="
+-- 田田
+-- @
+--
 decodeEncodedWords :: CharsetLookup -> B.ByteString -> T.Text
 decodeEncodedWords charsets s =
   either (const (decodeLenient s)) (foldMap conv) (parseOnly tokens s)
@@ -165,7 +172,9 @@ decodeEncodedWords charsets s =
     tokens :: Parser [Either B.ByteString EncodedWord]
     tokens = liftA2 (:) (Left <$> takeTillString "=?") more
           <|> ((:[]) . Left <$> takeByteString)
-    more = liftA2 (:) (Right <$> encodedWord <|> pure (Left "=?")) tokens
+    more = liftA2 (:) (Right <$> encodedWord) evenMore <|> liftA2 (:) (pure (Left "=?")) tokens
+    evenMore = liftA2 (:) (Right <$> (takeWhile1 isWsp *> string "=?" *> encodedWord)) evenMore
+          <|> tokens
     conv = either decodeLenient (decodeEncodedWord charsets)
 
 -- | Decode an 'EncodedWord'.  If transfer or charset decoding fails,
