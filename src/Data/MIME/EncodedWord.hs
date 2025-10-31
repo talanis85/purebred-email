@@ -35,7 +35,7 @@ module Data.MIME.EncodedWord
   ) where
 
 import Control.Applicative ((<|>), optional)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import Data.Monoid (Sum(Sum), Any(Any))
 
 import Control.Lens (to, clonePrism, review, view, foldMapOf)
@@ -46,6 +46,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Builder as Builder
 import qualified Data.CaseInsensitive as CI
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
@@ -192,10 +193,14 @@ decodeEncodedWord charsets w =
 encodeEncodedWords :: T.Text -> B.ByteString
 encodeEncodedWords t = maybe utf8 (const ew) (chooseEncodedWordEncoding utf8)
   where
-    ew = B.intercalate " " . fmap encOrNot . B.split 32 $ utf8
-    encOrNot s = maybe s (g s) (chooseEncodedWordEncoding s)
-    g s (enc, p) = serialiseEncodedWord $
+    ew = B.intercalate " " $ fmap encOrNot $ concat $ fmap addSpaces $ groupedWords
+    encOrNot (Nothing, s) = s
+    encOrNot (Just (enc, p), s) = serialiseEncodedWord $
       EncodedWord "utf-8" Nothing enc (review (clonePrism p) s)
+    addSpaces x = NonEmpty.head x : fmap (fmap (" " <>)) (NonEmpty.tail x)
+    groupedWords = NonEmpty.groupBy (\x y -> isJust (fst x) && isJust (fst y)) wordsWithEnc
+    wordsWithEnc = fmap addEncoding $ B.split 32 $ utf8
+    addEncoding s = (chooseEncodedWordEncoding s, s)
     utf8 = T.encodeUtf8 t
 
 chooseEncodedWordEncoding :: B.ByteString -> Maybe (TransferEncodingName, TransferEncoding)
